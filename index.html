@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atelier de tenues</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabine d'essayage en trois postes — catalogue (portant), mannequin (cabine), étiquette d'accord (analyse) */
+:root{
+  --bg:#ECEBE7; --panel:#FAFAF8; --ink:#1B1B1F; --muted:#66656B; --line:#D8D6D0;
+  --accent:#2F47C9; --accent-ink:#FFFFFF; --accent-soft:#E3E7FA;
+  --form:#D9D3C9; --form-edge:#B7AFA2; --under:#C6BFB2;
+  --tag:#E9DEC2; --tag-ink:#3A3222; --tape:#E6C35E; --tape-ink:#4A3A0E;
+  --ok:#2E7D4F; --warn:#B4601A;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141416; --panel:#1D1D20; --ink:#EDEBE6; --muted:#9D9BA3; --line:#2F2F35;
+  --accent:#8496FF; --accent-ink:#0F1330; --accent-soft:#252B4D;
+  --form:#55514B; --form-edge:#6C675E; --under:#46433E;
+  --tag:#3A3428; --tag-ink:#EBDFC4; --tape:#B8973A; --tape-ink:#20190A;
+  --ok:#6FCF97; --warn:#F2A65A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141416; --panel:#1D1D20; --ink:#EDEBE6; --muted:#9D9BA3; --line:#2F2F35;
+  --accent:#8496FF; --accent-ink:#0F1330; --accent-soft:#252B4D;
+  --form:#55514B; --form-edge:#6C675E; --under:#46433E;
+  --tag:#3A3428; --tag-ink:#EBDFC4; --tape:#B8973A; --tape-ink:#20190A;
+  --ok:#6FCF97; --warn:#F2A65A; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
+h1{font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.09em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between}
+.top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel);padding:8px 14px;border-radius:8px;font-weight:500;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);grid-template-areas:"fit" "ana" "cat"}
+@media (min-width:760px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"fit ana" "cat cat"}}
+@media (min-width:1200px){.grid{grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr) minmax(290px,.85fr);grid-template-areas:"cat fit ana";align-items:start}
+  .cat .items{max-height:calc(100vh - 290px);overflow:auto}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.cat{grid-area:cat}.fit{grid-area:fit}.ana{grid-area:ana}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 12px;font-size:13px}
+.chip.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.swatches{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sw{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--c);padding:0;flex:none}
+.sw.on{outline:2px solid var(--accent);outline-offset:2px}
+.sw.all{width:auto;border-radius:999px;padding:0 10px;font-size:12px;background:transparent;height:24px}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;padding:2px}
+.item{background:var(--bg);border:1px solid transparent;border-radius:10px;padding:8px 8px 9px;display:flex;flex-direction:column;gap:4px;text-align:left;user-select:none}
+.item:hover{border-color:var(--muted)}
+.item:active{cursor:grabbing}
+.item svg{width:100%;height:92px;display:block}
+.in{font-size:13px;font-weight:600;line-height:1.25}
+.ic{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.ic i{width:9px;height:9px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.stage{position:relative;border-radius:10px;background:var(--bg);border:1.5px dashed transparent;transition:border-color .15s,background .15s}
+.stage.over{border-color:var(--accent);background:var(--accent-soft)}
+.stage svg{display:block;width:100%;height:auto;max-height:540px}
+.stage .hint{position:absolute;left:12px;bottom:10px;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.worn{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:transparent;text-align:left;width:100%}
+.row.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.row.empty{opacity:.7;border-style:dashed}
+.row svg{width:44px;height:40px;display:block}
+.row .lab{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.row .nm{font-size:14px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x{border:0;background:transparent;width:28px;height:28px;border-radius:6px;color:var(--muted);font-size:18px;line-height:1}
+.x:hover{background:var(--bg);color:var(--ink)}
+.recolor{display:flex;flex-direction:column;gap:8px}
+.recolor .lbl{font-size:13px;color:var(--muted)}
+.recolor input[type=color]{width:30px;height:26px;border:1px solid var(--line);border-radius:6px;background:transparent;padding:1px}
+.tag{background:var(--tag);color:var(--tag-ink);padding:16px 16px 16px 30px;position:relative;
+  clip-path:polygon(16px 0,100% 0,100% 100%,16px 100%,0 calc(100% - 16px),0 16px);border-radius:0 8px 8px 0}
+.tag::before{content:"";position:absolute;left:11px;top:50%;width:9px;height:9px;margin-top:-4.5px;border-radius:50%;background:var(--panel);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.tag .k{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.75}
+.tag .hn{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.1;margin-top:2px}
+.tag .sc{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.tag .sc small{font-size:14px;font-weight:700;opacity:.7}
+.tag p{margin:8px 0 0;font-size:14px;line-height:1.5}
+.tagtop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.wheelbox{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.wheelbox svg{width:210px;height:210px;flex:none;max-width:100%}
+.wheelbox .wside{flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px}
+.wname{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.1;margin:0}
+.wk{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0}
+.hcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.hcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);padding:0;text-align:left;display:flex;flex-direction:column}
+.hcard:hover{border-color:var(--muted)}
+.hcard .c{height:56px}
+.hcard b{font-size:13px;font-weight:600;padding:7px 10px 0}
+.hcard small{font-size:12px;color:var(--muted);padding:0 10px 8px}
+.legend{font-size:12px;color:var(--muted);flex:1;min-width:150px;line-height:1.5;margin:0}
+.bar{display:flex;height:16px;border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.bar div{height:100%}
+.barlab{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:4px}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:14px}
+.checks li{display:grid;grid-template-columns:10px minmax(0,1fr);gap:9px;align-items:baseline}
+.checks li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);transform:translateY(-1px)}
+.checks li.w::before{background:var(--warn)}
+.checks li.n::before{background:var(--muted)}
+.sub{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:14px}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.pre{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:6px 6px 8px;display:flex;flex-direction:column;gap:2px;font-size:12px;font-weight:500;text-align:center;position:relative}
+.pre:hover{border-color:var(--muted)}
+.pre svg{width:100%;height:110px;display:block}
+.pre .del{position:absolute;top:2px;right:2px}
+.empty-note{font-size:13px;color:var(--muted);margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;padding:10px 14px;font-family:var(--f-display);font-weight:700;font-size:15px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.bfilters{display:flex;flex-direction:column;gap:10px}
+.search{width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit}
+.brands{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.brand{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.brand .bh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.brand h3{font-family:var(--f-display);font-weight:800;font-size:18px;margin:0;line-height:1.15}
+.brand .price{font-family:var(--f-mono);font-size:13px;letter-spacing:.04em;white-space:nowrap}
+.brand .price span{opacity:.3}
+.brand .meta{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.brand p{margin:0;font-size:14px;line-height:1.5}
+.brand .foot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:auto;padding-top:4px}
+.mini-chip{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.brand a{color:var(--accent);font-size:13px;font-weight:500;text-decoration:none;margin-left:auto}
+.brand a:hover{text-decoration:underline}
+.linkbtn{border:0;background:transparent;color:var(--accent);font-size:13px;font-weight:500;padding:0}
+.linkbtn:hover{text-decoration:underline}
+.bnote{font-size:13px;color:var(--muted);margin:0}
+.grp{display:flex;flex-direction:column;gap:10px}
+.grp h2{display:flex;gap:10px;align-items:baseline}
+.grp h2 small{font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--muted);letter-spacing:0;text-transform:none}
+.harm{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px}
+.hgroup{display:flex;flex-direction:column;gap:6px}
+.hgroup .hl{font-size:13px;font-weight:500}
+.hgroup .hl span{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Atelier de tenues</h1>
+      <p>Glisse une pièce du catalogue sur le mannequin (ou clique dessus). L'étiquette lit les couleurs sur le cercle chromatique et te dit si l'accord tient.</p>
+    </div>
+    <div class="actions" id="atelierActions">
+      <button class="btn primary" id="inspire">Inspire-moi</button>
+      <button class="btn" id="save">Enregistrer la tenue</button>
+      <button class="btn" id="clear">Tout enlever</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-atelier" data-view="atelier" aria-selected="true">Atelier</button>
+    <button class="tab" role="tab" id="tab-marques" data-view="marques" aria-selected="false">Marques</button>
+  </nav>
+
+  <section id="view-marques" hidden aria-label="Répertoire de marques" style="display:flex;flex-direction:column;gap:18px">
+    <div class="bfilters">
+      <input class="search" id="bsearch" type="search" placeholder="Carhartt, Paris, maille…" aria-label="Rechercher une marque">
+      <div class="chips" id="bcat"></div>
+      <div class="chips" id="bprice"></div>
+      <p class="bnote">Prix indicatifs pour une pièce type (t-shirt, pull, pantalon) : € moins de 50 €, €€ 50 à 120 €, €€€ 120 à 300 €, €€€€ au-delà. « Essayer dans l'atelier » filtre le portant sur le style de la marque.</p>
+    </div>
+    <div id="brandList" style="display:flex;flex-direction:column;gap:24px"></div>
+  </section>
+
+  <main class="grid" id="view-atelier">
+    <section class="panel cat" aria-label="Catalogue">
+      <div class="ph"><h2>Le portant</h2><span class="count" id="count"></span></div>
+      <div class="chips" id="catBar"></div>
+      <div class="chips" id="styBar"></div>
+      <div class="swatches" id="colBar"></div>
+      <div class="items" id="items"></div>
+    </section>
+
+    <section class="panel fit" aria-label="Cabine">
+      <div class="ph"><h2>La cabine</h2><span class="count" id="nb"></span></div>
+      <div class="stage" id="stage"><svg id="stageSvg" viewBox="0 0 240 452" role="img" aria-label="Mannequin habillé avec la tenue en cours"></svg><span class="hint">Dépose ici</span></div>
+      <div class="worn" id="worn"></div>
+      <div class="recolor" id="recolor"></div>
+    </section>
+
+    <section class="panel ana" aria-label="Analyse des couleurs">
+      <h2>L'étiquette d'accord</h2>
+      <div class="tag" id="tag"></div>
+      <div class="wheelbox"><svg id="wheel" viewBox="-110 -110 220 220" role="img" aria-label="Cercle chromatique cliquable"></svg>
+        <div class="wside">
+          <p class="wk">Couleur choisie</p>
+          <p class="wname" id="wName"></p>
+          <p class="wk" style="margin-top:6px">Harmonie</p>
+          <div class="chips" id="hChips"></div>
+          <p class="bnote" id="hDesc"></p>
+        </div>
+      </div>
+      <div class="hcards" id="hSugg"></div>
+      <p class="bnote" id="hHelp"></p>
+
+      <div><div class="bar" id="bar"></div><div class="barlab" id="barlab"></div></div>
+      <ul class="checks" id="checks"></ul>
+      <div class="sub"><h2>Tenues du moodboard</h2><div class="presets" id="presets"></div></div>
+      <div class="sub"><h2>Mes tenues</h2><div class="presets" id="saved"></div></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const PAL=[
+['noir','Noir','#1C1C1E',1],['anthracite','Anthracite','#45474B',1],['gris','Gris chiné','#9C9C9E',1],['blanc','Blanc','#F4F4F1',1],['ecru','Écru','#E8E0CC',1],['beige','Beige','#CFBC98',1],
+['camel','Camel','#B98A55',2],['chocolat','Chocolat','#5A3A26',2],['marine','Marine','#1F2A44',2],['delave','Jean délavé','#A3B8CE',2],['jeanmoy','Jean moyen','#5C7FA6',2],['brut','Jean brut','#2B3651',2],
+['bordeaux','Bordeaux','#6E1F2B',0],['rouge','Rouge','#B32630',0],['rouille','Rouille','#A6492A',0],['orange','Orange brûlé','#C8702E',0],['moutarde','Moutarde','#C99A2E',0],['jaune','Jaune pâle','#E6D27A',0],
+['olive','Olive','#6E6F38',0],['kaki','Kaki','#556B3B',0],['sapin','Vert sapin','#2F4A35',0],['sauge','Vert sauge','#9AAA8A',0],
+['canard','Bleu canard','#2D6B68',0],['ciel','Bleu ciel','#A9C7E3',0],['roi','Bleu roi','#2F5288',0],
+['lavande','Lavande','#B4A6D6',0],['prune','Prune','#5C3A6C',0],['framboise','Framboise','#93385F',0],['rose','Rose poudré','#D9A9A6',0]
+].map(([k,n,h,neu])=>({k,n,h,neu}));
+const P=Object.fromEntries(PAL.map(c=>[c.k,c]));
+const NEU=['noir','anthracite','gris','blanc','ecru','beige'];
+const EARTH=['camel','chocolat','bordeaux','rouille','orange','moutarde','olive','kaki','sapin','sauge'];
+const COOL=['marine','canard','ciel','roi','lavande','prune','framboise','rose','rouge','jaune'];
+const DEN=['delave','jeanmoy','brut'];
+
+const hx=h=>{h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16))};
+const toHex=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const mix=(h,t,a)=>toHex(hx(h).map(v=>v*(1-a)+t*a));
+const lum=h=>{const[r,g,b]=hx(h).map(v=>v/255);return .2126*r+.7152*g+.0722*b};
+function hsl(h){let[r,g,b]=hx(h).map(v=>v/255);const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let s=0,hh=0;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);hh=mx===r?((g-b)/d+(g<b?6:0)):mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60}return{h:hh,s,l}}
+const RG=[0,30,60,120,180,240,280,330,360],RY=[0,60,120,180,210,240,270,330,360];
+function ryb(h){for(let i=1;i<RG.length;i++)if(h<=RG[i]){const t=(h-RG[i-1])/(RG[i]-RG[i-1]);return RY[i-1]+t*(RY[i]-RY[i-1])}return h}
+const sector=hex=>Math.round(ryb(hsl(hex).h)/30)%12;
+const dist=(a,b)=>{const d=Math.abs(a-b)%12;return Math.min(d,12-d)};
+function neuOf(hex){const p=PAL.find(c=>c.h.toLowerCase()===hex.toLowerCase());if(p)return p.neu;const s=hsl(hex);return(s.s<.12||s.l<.1||s.l>.93)?1:0}
+const colorName=hex=>{const p=PAL.find(c=>c.h.toLowerCase()===hex.toLowerCase());return p?p.n:'Personnalisée'};
+
+function colsFor(t,f){const L=lum(f);return{f,s:L<.12?mix(f,255,.3):mix(f,0,.32),x:L<.12?mix(f,255,.24):mix(f,0,.26),
+  dk:L<.12?mix(f,255,.1):mix(f,0,.16),lt:mix(f,255,.3),cc:L<.12?mix(f,255,.18):mix(f,0,.5),
+  stripe:L>.5?'#1F2A44':'#EAE3D2',sole:t.sole==='dark'?'#26211D':(L>.8?'#D6D2C7':'#F3F2EE')}}
+const E=c=>`fill="${c.f}" stroke="${c.s}" stroke-width="1.4" stroke-linejoin="round"`;
+const Ef=(c,f)=>`fill="${f}" stroke="${c.s}" stroke-width="1.4" stroke-linejoin="round"`;
+const D=(c,w=1.2)=>`fill="none" stroke="${c.x}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+const both=s=>s+`<g transform="matrix(-1 0 0 1 240 0)">${s}</g>`;
+const rib=(c,y1,y2,x1=82,x2=158)=>{let s='';for(let x=x1;x<=x2;x+=5)s+=`M${x} ${y1} L${x} ${y2} `;return`<path d="${s}" ${D(c,1)} opacity=".7"/>`};
+const btns=(c,ys,x=123)=>ys.map(y=>`<circle cx="${x}" cy="${y}" r="1.9" fill="${c.x}"/>`).join('');
+const TS='M100 76 Q120 90 140 76 L168 86 L186 136 L164 146 L160 126 L161 232 L79 232 L80 126 L76 146 L54 136 L72 86 Z';
+const LS='M100 76 Q120 90 140 76 L168 86 Q178 120 189 232 L173 236 L161 134 L161 232 L79 232 L79 134 L67 236 L51 232 Q62 120 72 86 Z';
+const LSC='M100 76 Q120 90 140 76 L168 86 Q178 120 189 232 L173 236 L161 134 L161 228 Q120 240 79 228 L79 134 L67 236 L51 232 Q62 120 72 86 Z';
+const MC='M100 76 Q120 88 140 76 L166 86 L182 142 L162 148 L160 128 L160 230 L80 230 L80 128 L78 148 L58 142 L74 86 Z';
+const crew=(c,w=3)=>`<path d="M100 76 Q120 93 140 76" ${D(c,w)}/>`;
+const collar=c=>both(`<path d="M104 74 L120 92 L110 99 L99 78 Z" ${E(c)}/>`);
+const lsCuff=c=>both(`<path d="M53 223 L69 226" ${D(c)}/>`);
+const BAG='M80 200 L160 200 L166 300 L168 426 L124 426 L121 256 L119 256 L116 426 L72 426 L74 300 Z';
+const waist=c=>`<path d="M80 210 L160 210" ${D(c)}/><path d="M90 200 L90 210 M150 200 L150 210 M120 200 L120 210" ${D(c,2)}/>`;
+const fly=c=>`<path d="M120 210 Q123 236 116 248" ${D(c)}/>`;
+const jpock=c=>`<path d="M84 212 Q92 232 104 211 M156 212 Q148 232 136 211" ${D(c)}/>`;
+const stack=c=>`<path d="M76 398 Q94 405 114 397 M126 397 Q146 405 164 398 M74 370 Q90 375 106 368 M134 372 Q150 378 166 370" ${D(c,1)}/>`;
+const sole=(c,d)=>`<path d="${d}" fill="${c.sole}" stroke="${c.s}" stroke-width="1.2" stroke-linejoin="round"/>`;
+const laces=(c,ys)=>`<path d="${ys.map(y=>`M88 ${y} L102 ${y}`).join(' ')}" ${D(c,1.4)}/>`;
+
+const VB={haut:'40 50 160 196',dessous:'40 50 160 196',veste:'34 60 172 186',manteau:'34 60 172 290',bas:'62 194 116 236',chaussures:'62 384 116 64',tete:'82 2 76 56'};
+const TYPES=[
+ {id:'tshirt',n:'T-shirt oversize',slot:'dessous',sty:['street','classique','work'],colors:[...NEU,...EARTH,'marine','ciel','lavande','rose','canard'],
+  draw:c=>`<path d="${TS}" ${E(c)}/>`+crew(c)+both(`<path d="M57 131 L77 140" ${D(c)}/>`)},
+ {id:'raye',n:'T-shirt rayé',slot:'dessous',sty:['preppy','classique'],colors:['blanc','ecru','marine','bordeaux','sauge','ciel','noir','rouille'],
+  draw:c=>{let s='';for(let y=106;y<=224;y+=12)s+=`M81 ${y} L159 ${y} `;return`<path d="${TS}" ${E(c)}/><path d="${s}" fill="none" stroke="${c.stripe}" stroke-width="3.5"/>`+crew(c)}},
+ {id:'ls',n:'Manches longues',slot:'dessous',sty:['street','work'],colors:[...NEU,...EARTH,'marine'],
+  draw:c=>`<path d="${LS}" ${E(c)}/>`+crew(c)+lsCuff(c)},
+ {id:'pull',n:'Pull col rond',slot:'haut',sty:['classique','preppy','work'],colors:[...NEU,...EARTH,...COOL],
+  draw:c=>`<path d="${LS}" ${E(c)}/><path d="M97 76 Q120 99 143 76" fill="none" stroke="${c.dk}" stroke-width="6"/><path d="M97 76 Q120 99 143 76" ${D(c,1)}/>`+rib(c,221,231)+both(`<path d="M52 221 L68 224 M52 226 L68 229" ${D(c,1)}/>`)},
+ {id:'sweat',n:'Sweat',slot:'haut',sty:['street','classique'],colors:[...NEU,...EARTH,...COOL],
+  draw:c=>`<path d="${LS}" ${E(c)}/>`+crew(c,4)+rib(c,224,231)+lsCuff(c)},
+ {id:'hoodie',n:'Hoodie',slot:'haut',sty:['street'],colors:[...NEU,...EARTH,'marine','canard','prune','rose'],
+  draw:c=>`<path d="M90 92 Q88 62 120 58 Q152 62 150 92 Q120 82 90 92 Z" ${E(c)}/><path d="${LS}" ${E(c)}/><path d="M100 78 Q120 92 140 78" ${D(c,2)}/><path d="M94 176 L146 176 L154 214 L86 214 Z" ${D(c)}/><path d="M112 84 L110 122 M128 84 L130 122" ${D(c,2)}/>`+rib(c,224,231)+lsCuff(c)},
+ {id:'chemise',n:'Chemise',drawOpen:c=>both(`<path d="M116 92 L104 74 L72 86 Q62 120 51 232 L67 236 L79 134 L79 228 Q96 234 115 237 Z" ${E(c)}/><path d="M104 74 L116 92 L108 100 L99 78 Z" ${E(c)}/><path d="M53 223 L69 226" ${D(c)}/><path d="M86 112 L103 112 L103 130 L86 130 Z" ${D(c)}/>`+btns(c,[110,134,158,182,206],111)),slot:'dessous',sty:['classique','preppy'],colors:['blanc','ecru','ciel','lavande','beige','sauge','rose','marine','delave','kaki','bordeaux','noir'],
+  draw:c=>`<path d="${LSC}" ${E(c)}/>`+collar(c)+`<path d="M120 92 L120 235" ${D(c)}/>`+btns(c,[108,132,156,180,204])+`<path d="M86 112 L103 112 L103 130 L86 130 Z" ${D(c)}/>`+lsCuff(c)},
+ {id:'chemisemc',n:'Chemise manches courtes',drawOpen:c=>both(`<path d="M116 92 L104 74 L70 85 L51 143 L77 152 L79 128 L79 231 L115 231 Z" ${E(c)}/><path d="M104 74 L116 92 L108 100 L99 78 Z" ${E(c)}/><path d="M54 137 L78 146" ${D(c)}/><path d="M86 112 L103 112 L103 130 L86 130 Z" ${D(c)}/>`+btns(c,[110,134,158,182,206],111)),slot:'dessous',sty:['preppy','street'],colors:['ecru','blanc','lavande','ciel','rose','sauge','moutarde','rouille','marine','noir','jaune','rouge'],
+  draw:c=>`<path d="${MC}" ${E(c)}/>`+collar(c)+`<path d="M120 92 L120 230" ${D(c)}/>`+btns(c,[108,132,156,180,204])+`<path d="M86 112 L103 112 L103 130 L86 130 Z" ${D(c)}/>`+both(`<path d="M61 135 L80 141" ${D(c)}/>`)},
+ {id:'workwear',n:'Veste workwear',slot:'veste',sty:['work'],colors:['camel','chocolat','noir','kaki','olive','marine','beige','rouille','bordeaux','sapin'],
+  draw:c=>both(`<path d="M114 78 L100 72 L68 84 Q58 126 46 232 L64 236 L76 140 L78 226 L114 226 Z" ${E(c)}/><path d="M86 118 L104 118 L104 138 L86 138 Z" ${D(c)}/><path d="M78 216 L114 216" ${D(c)}/><path d="M48 222 L64 226" ${D(c)}/><circle cx="110" cy="132" r="2" fill="${c.x}"/><circle cx="110" cy="166" r="2" fill="${c.x}"/><circle cx="110" cy="200" r="2" fill="${c.x}"/><path d="M100 72 L114 78 L117 108 L104 100 Z" ${Ef(c,c.cc)}/>`)},
+ {id:'cuir',n:'Blouson cuir',slot:'veste',sty:['classique','street'],colors:['chocolat','noir','camel','bordeaux'],
+  draw:c=>both(`<path d="M114 80 L100 72 L68 84 Q58 126 46 230 L64 234 L76 140 L78 220 L114 220 Z" ${E(c)}/><path d="M100 72 L117 82 L112 120 L95 96 Z" ${Ef(c,c.dk)}/><path d="M113 120 L113 219" ${D(c,1.6)}/><path d="M86 176 L99 194" ${D(c,1.6)}/><path d="M84 134 Q91 166 86 204" fill="none" stroke="${c.lt}" stroke-width="2" opacity=".45"/>`)},
+ {id:'surchemise',n:'Surchemise',slot:'veste',sty:['work','classique'],colors:['ecru','beige','kaki','olive','camel','marine','rouille','gris','sapin','bordeaux'],
+  draw:c=>both(`<path d="M114 78 L101 72 L69 84 Q59 126 47 234 L64 238 L76 140 L78 236 L114 236 Z" ${E(c)}/><path d="M102 72 L118 92 L110 98 L99 76 Z" ${E(c)}/><path d="M84 114 L106 114 L106 140 L84 140 Z" ${D(c)}/><path d="M84 114 L106 114 L104 122 L86 122 Z" ${D(c)}/><path d="M49 224 L64 228" ${D(c)}/>`+btns(c,[120,150,180,210],111))},
+ {id:'bomber',n:'Bomber',slot:'veste',sty:['street'],colors:['kaki','noir','marine','sapin','bordeaux','chocolat','beige'],
+  draw:c=>both(`<path d="M114 80 L100 74 L66 86 Q54 126 44 222 L64 226 L76 140 L80 212 L114 212 Z" ${E(c)}/><path d="M80 212 L114 212 L114 226 L80 226 Z" ${Ef(c,c.dk)}/><path d="M44 222 L64 226 L63 236 L45 233 Z" ${Ef(c,c.dk)}/><path d="M100 74 L114 80 L114 90 L99 84 Z" ${Ef(c,c.dk)}/><path d="M113 90 L113 226" ${D(c,1.6)}/><path d="M60 122 L71 120 L72 134 L61 136 Z" ${D(c)}/>`+rib(c,214,224,84,112))},
+ {id:'doudoune',n:'Doudoune',slot:'veste',sty:['street','classique'],colors:['noir','marine','kaki','sapin','beige','ecru','chocolat','moutarde','bordeaux','rouge'],
+  draw:c=>both(`<path d="M116 78 L100 70 L64 84 Q52 126 42 230 L64 236 L74 140 L76 232 L116 232 Z" ${E(c)}/><path d="M76 110 Q96 116 116 110 M76 140 Q96 146 116 140 M76 170 Q96 176 116 170 M76 200 Q96 206 116 200 M56 140 Q64 143 72 139 M52 180 Q61 183 70 179" ${D(c)}/><path d="M100 70 L116 78 L116 98 L101 90 Z" ${E(c)}/><path d="M115 98 L115 231" ${D(c,1.6)}/>`)},
+ {id:'vestejean',n:'Veste en jean',slot:'veste',sty:['work','street'],colors:[...DEN,'noir','ecru'],
+  draw:c=>both(`<path d="M114 78 L100 72 L68 84 Q58 126 46 230 L64 234 L76 140 L78 216 L114 216 Z" ${E(c)}/><path d="M78 206 L114 206" ${D(c)}/><path d="M85 116 L105 116 L105 132 L95 138 L85 132 Z" ${D(c)}/><path d="M95 140 L95 204" ${D(c)}/><path d="M100 72 L116 84 L110 104 L97 80 Z" ${E(c)}/>`+btns(c,[124,150,176,200],111))},
+ {id:'manteau',n:'Manteau long',slot:'veste',sty:['classique','preppy'],colors:['camel','marine','noir','anthracite','chocolat','beige','gris','bordeaux','sapin'],vb:'manteau',
+  draw:c=>both(`<path d="M114 80 L100 72 L68 84 Q58 126 46 236 L64 240 L76 140 L74 336 L114 336 Z" ${E(c)}/><path d="M100 72 L119 84 L110 150 L93 98 Z" ${Ef(c,c.dk)}/><path d="M82 242 L104 242" ${D(c,1.6)}/><path d="M48 227 L64 230" ${D(c)}/><circle cx="109" cy="176" r="2.4" fill="${c.x}"/><circle cx="109" cy="206" r="2.4" fill="${c.x}"/>`)},
+ {id:'baggy',n:'Jean baggy',slot:'bas',sty:['street','work'],colors:[...DEN,'noir','ecru'],
+  draw:c=>`<path d="${BAG}" ${E(c)}/>`+waist(c)+fly(c)+jpock(c)+stack(c)},
+ {id:'large',n:'Pantalon large',slot:'bas',sty:['preppy','classique'],colors:['beige','ecru','noir','chocolat','kaki','olive','gris','marine','anthracite','camel'],
+  draw:c=>`<path d="M82 200 L158 200 L162 300 L164 426 L124 426 L121 252 L119 252 L116 426 L76 426 L78 300 Z" ${E(c)}/>`+waist(c)+fly(c)+`<path d="M98 222 L96 420 M142 222 L144 420" ${D(c,1)}/><path d="M85 212 L93 236 M155 212 L147 236" ${D(c)}/>`},
+ {id:'cargo',n:'Cargo',slot:'bas',sty:['street','work'],colors:['kaki','olive','noir','beige','anthracite','chocolat','sapin','sauge'],
+  draw:c=>`<path d="${BAG}" ${E(c)}/>`+waist(c)+fly(c)+both(`<path d="M74 284 L92 284 L92 330 L74 330 Z" ${D(c)}/><path d="M74 292 L92 292" ${D(c)}/>`)+stack(c)},
+ {id:'carpenter',n:'Carpenter double genou',slot:'bas',sty:['work'],colors:['camel','chocolat','noir','ecru','kaki','marine','delave','brut'],
+  draw:c=>`<path d="${BAG}" ${E(c)}/>`+both(`<path d="M76 298 L116 298 L116 348 L75 348 Z" ${Ef(c,c.dk)}/>`)+waist(c)+fly(c)+jpock(c)+`<path d="M150 228 L158 228 L160 272 L152 272 Z" ${D(c)}/><path d="M74 248 L81 250 L81 270 L74 268" ${D(c,1.6)}/>`},
+ {id:'droit',n:'Pantalon droit',slot:'bas',sty:['classique'],colors:[...NEU,'marine','chocolat','kaki','camel','bordeaux',...DEN],
+  draw:c=>`<path d="M84 200 L156 200 L158 426 L124 426 L121 248 L119 248 L116 426 L82 426 Z" ${E(c)}/>`+waist(c)+fly(c)+jpock(c)},
+ {id:'jogging',n:'Jogging',slot:'bas',sty:['street'],colors:['gris','anthracite','noir','marine','sapin','beige','bordeaux','sauge','ecru'],
+  draw:c=>`<path d="M82 200 L158 200 L162 300 L150 404 L124 404 L121 252 L119 252 L116 404 L90 404 L78 300 Z" ${E(c)}/>`+both(`<path d="M90 403 L116 403 L116 418 L92 418 Z" ${Ef(c,c.dk)}/>`)+`<path d="M82 200 L158 200 L158 212 L82 212 Z" ${Ef(c,c.dk)}/><path d="M114 210 L112 232 M126 210 L128 232" ${D(c,2)}/>`},
+ {id:'short',n:'Short',slot:'bas',sty:['street'],colors:['beige','kaki','noir','ecru','delave','marine','olive'],
+  draw:c=>`<path d="M80 200 L160 200 L168 300 L124 304 L121 248 L119 248 L116 304 L72 300 Z" ${E(c)}/>`+waist(c)+fly(c)+jpock(c)+both(`<path d="M74 291 L115 295" ${D(c)}/>`)},
+ {id:'basket',n:'Baskets basses',slot:'chaussures',sty:['street','classique','preppy'],colors:['blanc','ecru','noir','gris','chocolat','camel','sapin','bordeaux','marine','sauge'],
+  draw:c=>both(`<path d="M73 436 Q70 414 95 410 Q120 414 117 436 Z" ${E(c)}/>`+sole(c,'M71 432 L119 432 Q120 440 116 441 L74 441 Q70 440 71 432 Z')+laces(c,[417,422])+`<path d="M76 428 Q95 419 114 428" ${D(c)}/>`)},
+ {id:'montante',n:'Baskets montantes',slot:'chaussures',sty:['street'],colors:['blanc','noir','ecru','bordeaux','sapin','marine'],
+  draw:c=>both(`<path d="M75 436 Q72 400 83 392 L107 392 Q118 400 115 436 Z" ${E(c)}/>`+sole(c,'M72 432 L118 432 Q119 440 115 441 L75 441 Q71 440 72 432 Z')+laces(c,[400,407,414,421]))},
+ {id:'skate',n:'Skate épaisses',slot:'chaussures',sty:['street'],colors:['noir','blanc','gris','chocolat','marine','bordeaux'],
+  draw:c=>both(`<path d="M70 436 Q66 408 95 404 Q124 408 120 436 Z" ${E(c)}/>`+sole(c,'M68 431 L122 431 L122 443 L68 443 Z')+laces(c,[413,419,425])+`<path d="M80 410 Q95 404 110 410" ${D(c,2)}/>`)},
+ {id:'mocassin',n:'Mocassins',slot:'chaussures',sty:['preppy','classique'],sole:'dark',colors:['chocolat','noir','bordeaux','camel'],
+  draw:c=>both(`<path d="M72 437 Q72 421 95 419 Q118 421 118 437 Z" ${E(c)}/>`+sole(c,'M71 435 L119 435 L119 440 L71 440 Z')+`<path d="M84 427 Q95 423 106 427" ${D(c,2)}/>`)},
+ {id:'derby',n:'Derbies épaisses',slot:'chaussures',sty:['work','classique','preppy'],sole:'dark',colors:['noir','chocolat','bordeaux','camel'],
+  draw:c=>both(`<path d="M72 434 Q70 410 95 406 Q120 410 118 434 Z" ${E(c)}/>`+sole(c,'M69 431 L121 431 L121 444 L69 444 Z')+laces(c,[414,420])+`<path d="M73 428 L117 428" ${D(c)}/>`)},
+ {id:'mocepais',n:'Mocassins épais',slot:'chaussures',sty:['preppy','classique','street'],sole:'dark',colors:['noir','bordeaux','chocolat','camel'],
+  draw:c=>both(`<path d="M72 433 Q71 413 95 410 Q119 413 118 433 Z" ${E(c)}/><path d="M80 424 Q95 413 110 424" ${D(c)}/><path d="M81 420 L109 420 L107 426 L83 426 Z" ${Ef(c,c.dk)}/><path d="M91 422 L99 422" ${D(c,1.6)}/>`+sole(c,'M69 430 L121 430 L121 446 L69 446 Z')+`<path d="M74 446 L74 442 M82 446 L82 442 M90 446 L90 442 M98 446 L98 442 M106 446 L106 442 M114 446 L114 442" stroke="#5A5048" stroke-width="1.2"/>`)},
+ {id:'pampilles',n:'Mocassins à pampilles',slot:'chaussures',sty:['preppy','classique'],sole:'dark',colors:['noir','bordeaux','chocolat'],
+  draw:c=>both(`<path d="M72 434 Q71 414 95 411 Q119 414 118 434 Z" ${E(c)}/><path d="M80 425 Q95 414 110 425" ${D(c)}/><path d="M86 421 Q95 418 104 421" ${D(c,1.6)}/><path d="M92 421 L90 429 M98 421 L100 429" ${D(c,1.4)}/><circle cx="90" cy="430" r="2.2" fill="${c.x}"/><circle cx="100" cy="430" r="2.2" fill="${c.x}"/>`+sole(c,'M69 431 L121 431 L121 444 L69 444 Z'))},
+ {id:'boots',n:'Boots de travail',slot:'chaussures',sty:['work','street'],sole:'dark',colors:['camel','chocolat','noir','olive','beige','kaki','bordeaux'],
+  draw:c=>both(`<path d="M74 438 Q70 412 78 404 L80 386 L110 386 L112 404 Q120 412 116 438 Z" ${E(c)}/><path d="M79 386 L111 386 L111 395 L79 395 Z" ${Ef(c,c.dk)}/><path d="M88 400 L102 400 M88 407 L102 407 M88 414 L102 414 M88 421 L102 421" ${D(c,1.5)}/><circle cx="87" cy="400" r="1.4" fill="${c.x}"/><circle cx="103" cy="400" r="1.4" fill="${c.x}"/><circle cx="87" cy="414" r="1.4" fill="${c.x}"/><circle cx="103" cy="414" r="1.4" fill="${c.x}"/><path d="M74 430 Q95 425 116 430" ${D(c)}/>`+sole(c,'M71 434 L119 434 L119 447 L71 447 Z')+`<path d="M73 438 L117 438" stroke="#5A5048" stroke-width="1"/>`)},
+ {id:'bateau',n:'Chaussures bateau',slot:'chaussures',sty:['preppy','classique'],colors:['chocolat','camel','marine','bordeaux','beige'],
+  draw:c=>both(`<path d="M72 437 Q72 420 95 417 Q118 420 118 437 Z" ${E(c)}/><path d="M75 428 Q95 419 115 428" ${D(c,1.4)}/><path d="M82 423 Q95 415 108 423" ${D(c)}/><path d="M93 419 Q88 414 90 422 M97 419 Q102 414 100 422" ${D(c,1.2)}/>`+sole(c,'M70 434 L120 434 L120 441 L70 441 Z'))},
+ {id:'bonnet',n:'Bonnet',slot:'tete',sty:['work','street'],colors:[...NEU,...EARTH,'marine','canard','rouge','ciel'],
+  draw:c=>`<path d="M96 34 Q96 8 120 8 Q144 8 144 34 Z" ${E(c)}/><path d="M93 30 L147 30 L147 45 L93 45 Z" ${Ef(c,c.dk)}/>`+rib(c,31,44,96,144)},
+ {id:'casquette',n:'Casquette',slot:'tete',sty:['street'],colors:['noir','marine','beige','ecru','kaki','chocolat','bordeaux','sapin','ciel'],
+  draw:c=>`<path d="M97 35 Q98 13 120 13 Q142 13 143 35 Z" ${E(c)}/><path d="M120 13 L120 34 M108 16 Q104 26 104 35 M132 16 Q136 26 136 35" ${D(c)}/><circle cx="120" cy="13" r="2.2" fill="${c.x}"/><path d="M92 35 Q120 47 148 35 L146 41 Q120 53 94 41 Z" ${Ef(c,c.dk)}/>`},
+ {id:'bob',n:'Bob',slot:'tete',sty:['street'],colors:['beige','noir','ecru','kaki','olive','delave','sapin'],
+  draw:c=>`<path d="M100 32 Q100 12 120 12 Q140 12 140 32 Z" ${E(c)}/><path d="M86 42 L100 30 L140 30 L154 42 Q120 49 86 42 Z" ${E(c)}/><path d="M100 30 L140 30 M92 40 Q120 45 148 40" ${D(c)}/>`}
+];
+TYPES.forEach(t=>{t.vb=VB[t.vb||t.slot];t.colors=[...new Set(t.colors)]});
+const T=Object.fromEntries(TYPES.map(t=>[t.id,t]));
+const SLOTS=[['tete','Tête'],['veste','Veste'],['haut','Pull ou chemise ouverte'],['dessous','T-shirt ou chemise'],['bas','Bas'],['chaussures','Chaussures']];
+const UNDER=['tshirt','raye','ls'],SHIRTS=['chemise','chemisemc'];
+const catOf=t=>t.slot==='dessous'?'haut':t.slot;
+const CATS=[['tout','Tout'],['haut','Hauts'],['veste','Vestes'],['bas','Bas'],['chaussures','Chaussures'],['tete','Tête']];
+const STY=[['tous','Tous les styles'],['work','Workwear'],['street','Streetwear'],['preppy','Preppy'],['classique','Classique']];
+const WHEEL=['#E32227','#F05A28','#F7941D','#FDB813','#FFE600','#8DC63F','#00A651','#00A99D','#0072BC','#2E3192','#662D91','#B0207A'];
+const WNAMES=['rouge','rouge-orangé','orange','jaune-orangé','jaune','jaune-vert','vert','bleu-vert','bleu','bleu-violet','violet','rouge-violet'];
+
+let worn={},sel='haut',F={cat:'tout',sty:'tous',col:'toutes'};
+const $=id=>document.getElementById(id);
+const rand=a=>a[Math.floor(Math.random()*a.length)];
+
+function body(bare){return`<g fill="var(--form)" stroke="var(--form-edge)" stroke-width="1.2" stroke-linejoin="round">
+<path d="M80 92 Q66 140 55 236 L65 238 Q76 150 88 104 Z"/><path d="M160 92 Q174 140 185 236 L175 238 Q164 150 152 104 Z"/>
+<circle cx="60" cy="244" r="7"/><circle cx="180" cy="244" r="7"/>
+<path d="M86 206 L119 206 L115 426 L97 426 Z"/><path d="M154 206 L121 206 L125 426 L143 426 Z"/>
+<ellipse cx="98" cy="432" rx="13" ry="6"/><ellipse cx="142" cy="432" rx="13" ry="6"/>
+<path d="M112 56 L128 56 L130 84 L110 84 Z"/><path d="M82 86 Q120 76 158 86 L158 214 L82 214 Z"/><circle cx="120" cy="38" r="21"/></g>`+
+(bare?`<path d="M82 200 L158 200 L158 228 L124 236 L120 226 L116 236 L82 228 Z" fill="var(--under)" stroke="var(--form-edge)" stroke-width="1.2"/>`:'')}
+function dressed(o){let s=body(!o.bas);const lay=k=>{const t=T[o[k].t];return t.draw(colsFor(t,o[k].c))};
+  if(o.chaussures)s+=lay('chaussures');if(o.bas)s+=lay('bas');if(o.dessous&&!(o.haut&&!T[o.haut.t].drawOpen))s+=lay('dessous');
+  if(o.haut){const th=T[o.haut.t],ch=colsFor(th,o.haut.c);
+    if(o.dessous&&th.drawOpen)s+=th.drawOpen(ch);
+    else{if(o.dessous){const td=T[o.dessous.t],cd=colsFor(td,o.dessous.c);s+=`<path d="M81 224 L159 224 L159 239 L81 239 Z" ${E(cd)}/><path d="M98 72 Q120 84 142 72 L142 78 Q120 94 98 78 Z" ${E(cd)}/>`;s+=th.draw(ch);if(SHIRTS.includes(o.dessous.t))s+=collar(cd)}
+      else s+=th.draw(ch)}}
+  if(o.veste)s+=lay('veste');if(o.tete)s+=lay('tete');return s}
+function tape(){let s=`<rect x="3" y="14" width="13" height="430" rx="1.5" fill="var(--tape)"/>`;const top=16,bot=444,per=(bot-top)/180;
+  for(let cm=0;cm<=180;cm+=5){const y=bot-cm*per,big=cm%20===0;s+=`<path d="M3 ${y.toFixed(1)} L${big?10:7} ${y.toFixed(1)}" stroke="var(--tape-ink)" stroke-width=".7"/>`;
+    if(big&&cm>0)s+=`<text x="13.5" y="${(y+2).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="5.5" fill="var(--tape-ink)" text-anchor="end">${cm}</text>`}
+  return s}
+
+function renderFilters(){
+  $('catBar').innerHTML=CATS.map(([k,n])=>`<button class="chip ${F.cat===k?'on':''}" data-cat="${k}">${n}</button>`).join('');
+  $('styBar').innerHTML=STY.map(([k,n])=>`<button class="chip ${F.sty===k?'on':''}" data-sty="${k}">${n}</button>`).join('');
+  $('colBar').innerHTML=`<button class="sw all ${F.col==='toutes'?'on':''}" data-col="toutes">Toutes</button>`+PAL.map(c=>`<button class="sw ${F.col===c.k?'on':''}" data-col="${c.k}" title="${c.n}" aria-label="${c.n}" style="--c:${c.h}"></button>`).join('');
+}
+function renderCatalog(){
+  const list=[];TYPES.forEach(t=>{if(F.cat!=='tout'&&catOf(t)!==F.cat)return;if(F.sty!=='tous'&&!t.sty.includes(F.sty))return;
+    (F.col==='toutes'?t.colors:[F.col]).forEach(k=>list.push([t,P[k]]))});
+  $('count').textContent=list.length+' pièces';
+  $('items').innerHTML=list.map(([t,c])=>`<button class="item" draggable="true" data-t="${t.id}" data-c="${c.h}" aria-label="Porter : ${t.n} ${c.n}"><svg viewBox="${t.vb}" aria-hidden="true">${t.draw(colsFor(t,c.h))}</svg><span class="in">${t.n}</span><span class="ic"><i style="background:${c.h}"></i>${c.n}</span></button>`).join('')||`<p class="empty-note">Aucune pièce pour ce filtre.</p>`;
+}
+function renderStage(){$('stageSvg').innerHTML=tape()+dressed(worn);$('nb').textContent=Object.keys(worn).length+' / 6 pièces'}
+function renderWorn(){
+  $('worn').innerHTML=SLOTS.map(([k,n])=>{const w=worn[k];
+    if(!w)return`<button class="row empty ${sel===k?'sel':''}" data-slot="${k}"><span></span><span><span class="lab">${n}</span><br><span class="nm">Rien pour l'instant</span></span><span></span></button>`;
+    const t=T[w.t];return`<div class="row ${sel===k?'sel':''}" data-slot="${k}" role="button" tabindex="0"><svg viewBox="${t.vb}" aria-hidden="true">${t.draw(colsFor(t,w.c))}</svg><span style="min-width:0"><span class="lab">${n}</span><br><span class="nm">${t.n} · ${colorName(w.c)}</span></span><button class="x" data-rm="${k}" aria-label="Retirer ${t.n}">×</button></div>`}).join('');
+  const w=worn[sel],label=SLOTS.find(s=>s[0]===sel)[1].toLowerCase();
+  $('recolor').innerHTML=w?`<span class="lbl">Changer la couleur : ${label}</span><div class="swatches">${PAL.map(c=>`<button class="sw ${c.h===w.c?'on':''}" data-rc="${c.h}" title="${c.n}" aria-label="${c.n}" style="--c:${c.h}"></button>`).join('')}<input type="color" id="custom" value="${w.c}" aria-label="Couleur personnalisée"></div>`
+    :`<span class="lbl">Sélectionne une pièce portée pour changer sa couleur.</span>`;
+  const cu=$('custom');if(cu)cu.addEventListener('input',e=>{if(worn[sel]){worn[sel].c=e.target.value;renderStage();renderAnalysis();renderWornNames()}});
+}
+function renderWornNames(){document.querySelectorAll('.row').forEach(r=>{const k=r.dataset.slot,w=worn[k];if(w){const t=T[w.t];r.querySelector('svg').innerHTML=t.draw(colsFor(t,w.c));r.querySelector('.nm').textContent=t.n+' · '+colorName(w.c)}})}
+
+function weights(){let top=40;const w={tete:4,chaussures:8,bas:32,veste:0};
+  if(worn.veste){const long=worn.veste.t==='manteau';w.veste=long?48:34;top=long?6:12;w.bas=long?24:32}
+  if(worn.haut&&worn.dessous){const open=T[worn.haut.t].drawOpen;w.haut=top*(open?.6:.82);w.dessous=top-w.haut}else{w.haut=top;w.dessous=top}return w}
+const HARM={
+ 'Tout en neutres':'Aucune couleur vive : la base est sûre. Ajoute une pièce de couleur, un pull ou un bonnet, pour donner du caractère.',
+ 'Une couleur + neutres':'Une seule couleur portée sur une base neutre. La formule la plus facile, et elle marche presque toujours.',
+ 'Monochrome':'Plusieurs pièces dans la même famille de couleur. Varie les intensités et les matières pour éviter l\'effet uniforme.',
+ 'Analogue':'Des couleurs voisines sur le cercle : le rendu est doux et cohérent.',
+ 'Complémentaire':'Deux couleurs opposées sur le cercle, qui se mettent en valeur. Garde l\'une des deux en plus petite quantité.',
+ 'Contraste franc':'Deux couleurs séparées d\'un tiers du cercle. Ça peut passer, mais c\'est moins naturel : neutralise l\'une des deux ou rapproche-les.',
+ 'Triadique':'Trois couleurs réparties autour du cercle : c\'est vivant. Laisse une couleur dominer et garde beaucoup de neutre.',
+ 'Complémentaire divisé':'Une couleur et les deux voisines de son opposée : contrasté, mais plus nuancé qu\'un complémentaire pur.',
+ 'Mélange libre':'Ces couleurs ne suivent pas une harmonie classique. Essaie de remplacer une pièce par un neutre.',
+ 'Beaucoup de couleurs':'Plus de trois familles de couleurs : la tenue part dans tous les sens. Repasse une ou deux pièces en neutre.'};
+function analyze(){
+  const sl=Object.keys(worn);if(sl.length<2)return null;
+  const W=weights(),tot=sl.reduce((a,s)=>a+W[s],0);
+  const pcs=sl.map(s=>{const h=worn[s].c,x=hsl(h);return{s,h,neu:neuOf(h),sec:sector(h),r:ryb(x.h),w:W[s]/tot,l:x.l}});
+  const chrom=pcs.filter(p=>p.neu!==1),secs=[...new Set(chrom.map(p=>p.sec))];
+  const vivid=[...new Set(pcs.filter(p=>p.neu===0).map(p=>p.sec))];
+  let h,pts;
+  if(!secs.length){h='Tout en neutres';pts=18}
+  else if(secs.length===1){h=chrom.length>1?'Monochrome':'Une couleur + neutres';pts=chrom.length>1?30:28}
+  else{const maxd=Math.max(...secs.flatMap(a=>secs.map(b=>dist(a,b))));
+    if(maxd<=2){h='Analogue';pts=30}
+    else if(secs.length===2){if(dist(secs[0],secs[1])>=5){h='Complémentaire';pts=30}else{h='Contraste franc';pts=14}}
+    else if(secs.length===3){const[a,b,c]=secs,ds=[dist(a,b),dist(b,c),dist(a,c)];
+      if(ds.every(d=>d>=3&&d<=5)){h='Triadique';pts=26}
+      else if(secs.some(x=>{const o=secs.filter(y=>y!==x);return dist(x,o[0])>=4&&dist(x,o[1])>=4&&dist(o[0],o[1])<=3})){h='Complémentaire divisé';pts=28}
+      else{h='Mélange libre';pts=6}}
+    else{h='Beaucoup de couleurs';pts=-8}}
+  const nPct=Math.round(100*pcs.filter(p=>p.neu>0).reduce((a,p)=>a+p.w,0));
+  const checks=[];let adj=0;
+  if(vivid.length===0&&nPct>=99)checks.push(['n','Que des neutres : impossible de rater, mais une touche de couleur réveillerait la tenue.']);
+  else if(nPct>=45&&nPct<=88){checks.push(['o',`Bonne base neutre (${nPct} %). La couleur ressort sans écraser.`]);adj+=20}
+  else if(nPct<45){checks.push(['w',`Peu de neutres (${nPct} %). Passe le bas ou la veste dans un neutre pour calmer l'ensemble.`]);adj-=6}
+  else {checks.push(['o',`Base très neutre (${nPct} %). La pièce de couleur joue le rôle d'accent.`]);adj+=14}
+  if(vivid.length>3){checks.push(['w',`${vivid.length} familles de couleurs vives : c'est trop, vise 1 à 3.`]);adj-=15}
+  else if(vivid.length>0)checks.push(['o',`${vivid.length} famille${vivid.length>1?'s':''} de couleur vive : dosage lisible.`]);
+  const warm=vivid.filter(s=>[11,0,1,2,3,4].includes(s)).length,cool=vivid.filter(s=>[6,7,8,9,10].includes(s)).length;
+  if(warm&&cool)checks.push(['n','Mélange chaud et froid : le contraste est voulu, assume-le avec une couleur dominante.']);
+  else if(warm)checks.push(['n','Palette chaude : ambiance automne, terre, cuir.']);
+  else if(cool)checks.push(['n','Palette froide : rendu net et calme.']);
+  const top=worn.haut||worn.dessous;if(top&&worn.bas){const a=hsl(top.c).l,b=hsl(worn.bas.c).l;if(Math.abs(a-b)<.07&&top.c!==worn.bas.c&&!worn.veste)checks.push(['w','Haut et bas ont presque la même clarté : la silhouette se confond. Éclaircis ou fonce l\'un des deux.'])}
+  const score=Math.max(0,Math.min(100,Math.round(50+pts+adj)));
+  return{h,score,pcs,secs,nPct,checks}
+}
+function renderAnalysis(){
+  const a=analyze();
+  if(!a){$('tag').innerHTML=`<div class="k">En attente</div><div class="hn">Habille le mannequin</div><p>Ajoute au moins deux pièces pour lire l'accord des couleurs.</p>`;
+    $('checks').innerHTML='';$('bar').innerHTML='';$('barlab').innerHTML='';renderWheel([],[]);return}
+  $('tag').innerHTML=`<div class="tagtop"><div><div class="k">Harmonie</div><div class="hn">${a.h}</div></div><div style="text-align:right"><div class="k">Note</div><div class="sc">${a.score}<small>/100</small></div></div></div><p>${HARM[a.h]}</p>`;
+  $('checks').innerHTML=a.checks.map(([t,s])=>`<li class="${t==='w'?'w':t==='n'?'n':''}">${s}</li>`).join('');
+  const order=['veste','haut','bas','chaussures','tete'];const ps=[...a.pcs].sort((x,y)=>order.indexOf(x.s)-order.indexOf(y.s));
+  $('bar').innerHTML=ps.map(p=>`<div title="${colorName(p.h)}" style="flex:${p.w};background:${p.h}"></div>`).join('');
+  $('barlab').innerHTML=`<span>Neutres ${a.nPct} %</span><span>Couleur ${100-a.nPct} %</span>`;
+  renderWheel(a.pcs,a.secs);
+}
+const WH=[["Bordeaux","#8E2436"],["Rouille","#B5502F"],["Orange brûlé","#D07A2D"],["Moutarde","#C99A2E"],["Jaune pâle","#E2CB6E"],["Olive clair","#8C9440"],["Kaki","#556B3B"],["Bleu canard","#2D6B68"],["Bleu","#2F5288"],["Indigo","#3A3D78"],["Prune","#5C3A6C"],["Framboise","#93385F"]];
+const HM={'Complémentaire':{d:'Couleurs opposées : fort contraste, look affirmé. Garde l\'une des deux en petite touche.',f:i=>[i,(i+6)%12],r:['Principale','Opposée']},
+ 'Analogue':{d:'Trois voisines sur le cercle : rendu doux et harmonieux, très facile à porter.',f:i=>[i,(i+1)%12,(i+11)%12],r:['Principale','Voisine','Voisine']},
+ 'Monochrome':{d:'Une seule teinte en plusieurs intensités : élégant et allongeant.',f:i=>[i,'L','D'],r:['Principale','Version claire','Version profonde']},
+ 'Triadique':{d:'Trois couleurs à égale distance : vivant, à doser avec beaucoup de neutre.',f:i=>[i,(i+4)%12,(i+8)%12],r:['Principale','Triangle','Triangle']},
+ 'Compl. divisé':{d:'La couleur + les deux voisines de son opposée : contraste mais plus nuancé.',f:i=>[i,(i+5)%12,(i+7)%12],r:['Principale','Accent','Accent']}};
+let HSEL='Complémentaire',WSEL=null;
+function baseSector(){if(WSEL!==null)return WSEL;for(const k of ['haut','dessous','veste','tete','bas']){const w=worn[k];if(w&&neuOf(w.c)===0)return sector(w.c)}return 8}
+function renderWheel(){
+  const sel0=baseSector(),sc=HM[HSEL].f(sel0).filter(x=>typeof x==='number');
+  const P2=(a,r)=>(r*Math.cos(a)).toFixed(1)+' '+(r*Math.sin(a)).toFixed(1);let g='';
+  WH.forEach((c,i)=>{const a0=(i*30-105)*Math.PI/180,a1=((i+1)*30-105)*Math.PI/180,R=100,r=48;
+    g+=`<path d="M${P2(a0,R)} A${R} ${R} 0 0 1 ${P2(a1,R)} L${P2(a1,r)} A${r} ${r} 0 0 0 ${P2(a0,r)}Z" fill="${c[1]}" stroke="${i===sel0?'var(--ink)':'var(--panel)'}" stroke-width="${i===sel0?3:1.5}" style="cursor:pointer" data-ws="${i}"><title>${c[0]}</title></path>`});
+  if(sc.length>1){const pts=sc.map(i=>P2((i*30-90)*Math.PI/180,74).split(' '));
+    g+=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="1.5" pointer-events="none"/>`+pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--ink)" pointer-events="none"/>`).join('')}
+  $('wheel').innerHTML=g;
+}
+function renderHarm(){
+  const i0=baseSector(),c=WH[i0];
+  $('wName').textContent=c[0];
+  $('hChips').innerHTML=Object.keys(HM).map(k=>`<button class="chip ${HSEL===k?'on':''}" data-h="${k}">${k}</button>`).join('');
+  $('hDesc').textContent=HM[HSEL].d;
+  const r=HM[HSEL].f(i0).map((x,j)=>{const nm=HM[HSEL].r[j];if(x==='L')return[c[0]+' clair',mix(c[1],255,.5),nm];if(x==='D')return[c[0]+' profond',mix(c[1],0,.42),nm];return[WH[x][0],WH[x][1],nm]});
+  $('hSugg').innerHTML=r.map(([n,h,role])=>`<button class="hcard" data-rc="${h}" aria-label="Appliquer ${n}"><div class="c" style="background:${h}"></div><b>${n}</b><small>${role}</small></button>`).join('');
+  const lab=SLOTS.find(x=>x[0]===sel)[1].toLowerCase();
+  $('hHelp').textContent=worn[sel]?`Clique une couleur du cercle pour changer de point de départ, puis une carte pour l'appliquer à : ${lab}.`:'Clique une couleur du cercle pour changer de point de départ. Sélectionne une pièce dans la cabine pour lui appliquer une carte.';
+}
+function renderAll(){renderStage();renderWorn();renderAnalysis();renderHarm()}
+
+const PRESETS=[
+ {n:'Bordeaux et denim',o:{haut:['pull','bordeaux'],dessous:['tshirt','blanc'],bas:['baggy','delave'],chaussures:['basket','blanc']}},
+ {n:'Olive et chocolat',o:{haut:['pull','olive'],bas:['large','chocolat'],chaussures:['basket','camel'],tete:['bonnet','chocolat'],dessous:['tshirt','ecru']}},
+ {n:'Workwear brut',o:{veste:['workwear','camel'],dessous:['tshirt','blanc'],bas:['baggy','brut'],chaussures:['mocassin','chocolat']}},
+ {n:'Chemise lavande',o:{haut:['chemisemc','lavande'],dessous:['tshirt','blanc'],bas:['baggy','delave'],chaussures:['derby','chocolat']}},
+ {n:'Cuir d\'automne',o:{veste:['cuir','chocolat'],haut:['pull','olive'],bas:['carpenter','chocolat'],chaussures:['boots','chocolat']}}
+].map(p=>({n:p.n,o:Object.fromEntries(Object.entries(p.o).map(([k,[t,c]])=>[k,{t,c:P[c].h}]))}));
+const mini=o=>`<svg viewBox="20 0 200 452" aria-hidden="true">${dressed(o)}</svg>`;
+function renderPresets(){$('presets').innerHTML=PRESETS.map((p,i)=>`<button class="pre" data-pre="${i}">${mini(p.o)}<span>${p.n}</span></button>`).join('')}
+const KEY='atelier-tenues-v1';
+const loadSaved=()=>{try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}};
+const storeSaved=a=>{try{localStorage.setItem(KEY,JSON.stringify(a));return true}catch(e){return false}};
+function renderSaved(){const s=loadSaved();$('saved').innerHTML=s.length?s.map((p,i)=>`<div class="pre"><button class="x del" data-del="${i}" aria-label="Supprimer ${p.n}">×</button><button class="pre" style="border:0;padding:0;background:transparent" data-load="${i}">${mini(p.o)}<span>${p.n}</span></button></div>`).join(''):`<p class="empty-note">Tes tenues enregistrées apparaîtront ici, dans ce navigateur.</p>`}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.k);toast.k=setTimeout(()=>t.classList.remove('on'),1800)}
+
+function wear(tid,hex){const t=T[tid];if(!t)return;let slot=t.slot;
+  if(SHIRTS.includes(tid)&&worn.dessous&&UNDER.includes(worn.dessous.t)&&(!worn.haut||SHIRTS.includes(worn.haut.t)))slot='haut';
+  else if(UNDER.includes(tid)&&worn.dessous&&SHIRTS.includes(worn.dessous.t)&&!worn.haut)worn.haut=worn.dessous;
+  worn[slot]={t:tid,c:hex};sel=slot;renderAll()}
+function inspire(){
+  const vivid=PAL.filter(c=>c.neu===0).map(c=>({...c,sec:sector(c.h)}));const base=rand(vivid);
+  const kinds=[[0],[0,6],[0,1],[0,11],[0,4,8],[0,5,7]],k=rand(kinds);
+  const pick=off=>{const s=((base.sec+off)%12+12)%12;let c=vivid.filter(v=>v.sec===s);if(!c.length)c=vivid.filter(v=>dist(v.sec,s)===1);return c.length?rand(c).h:base.h};
+  const cs=k.map(o=>o===0?base.h:pick(o));
+  worn={bas:{t:rand(['baggy','large','cargo','carpenter','droit']),c:P[rand(['delave','jeanmoy','brut','ecru','noir','beige','anthracite'])].h},
+    dessous:{t:rand(['tshirt','ls','chemise']),c:P[rand(['blanc','ecru','gris','blanc'])].h},
+    chaussures:{t:rand(['basket','derby','mocassin','skate','montante','mocepais','boots','bateau']),c:P[rand(['blanc','noir','chocolat','ecru'])].h}};
+  if(Math.random()<.65)worn.haut={t:rand(['pull','sweat','hoodie','pull']),c:cs[0]};else worn.dessous={t:rand(['tshirt','chemise','chemisemc','raye','ls']),c:cs[0]};
+  if(cs[1]){if(Math.random()<.5)worn.veste={t:rand(['workwear','bomber','surchemise','doudoune']),c:cs[1]};else worn.tete={t:rand(['bonnet','casquette']),c:cs[1]}}
+  else if(Math.random()<.5)worn.veste={t:rand(['workwear','surchemise','manteau','cuir']),c:P[rand(['camel','noir','chocolat','beige','marine'])].h};
+  if(cs[2]){if(!worn.tete)worn.tete={t:rand(['bonnet','casquette','bob']),c:cs[2]};else worn.veste={t:rand(['bomber','workwear']),c:cs[2]}}
+  sel='haut';renderAll();
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-ws],[data-h],[data-cat],[data-sty],[data-col],.item,[data-rm],[data-slot],[data-rc],[data-pre],[data-load],[data-del]');if(!b)return;
+  if(b.dataset.ws){WSEL=+b.dataset.ws;renderHarm();renderWheel()}
+  else if(b.dataset.h){HSEL=b.dataset.h;renderHarm();renderWheel()}
+  else if(b.dataset.cat){F.cat=b.dataset.cat;renderFilters();renderCatalog()}
+  else if(b.dataset.sty){F.sty=b.dataset.sty;renderFilters();renderCatalog()}
+  else if(b.dataset.col){F.col=b.dataset.col;renderFilters();renderCatalog()}
+  else if(b.classList.contains('item')){wear(b.dataset.t,b.dataset.c)}
+  else if(b.dataset.rm){delete worn[b.dataset.rm];renderAll()}
+  else if(b.dataset.rc){if(worn[sel]){worn[sel].c=b.dataset.rc;renderAll()}}
+  else if(b.dataset.pre){worn=JSON.parse(JSON.stringify(PRESETS[+b.dataset.pre].o));sel='haut';renderAll()}
+  else if(b.dataset.load){const s=loadSaved()[+b.dataset.load];if(s){worn=JSON.parse(JSON.stringify(s.o));sel='haut';renderAll()}}
+  else if(b.dataset.del){const s=loadSaved();s.splice(+b.dataset.del,1);storeSaved(s);renderSaved()}
+  else if(b.dataset.slot){sel=b.dataset.slot;if(!worn[sel]){F.cat=sel==='dessous'?'haut':sel;renderFilters();renderCatalog()}renderWorn()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('row')){sel=e.target.dataset.slot;renderWorn()}});
+$('items').addEventListener('dragstart',e=>{const b=e.target.closest('.item');if(!b)return;e.dataTransfer.setData('text/plain',b.dataset.t+'|'+b.dataset.c);e.dataTransfer.effectAllowed='copy'});
+const st=$('stage');
+st.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';st.classList.add('over')});
+st.addEventListener('dragleave',()=>st.classList.remove('over'));
+st.addEventListener('drop',e=>{e.preventDefault();st.classList.remove('over');const[t,c]=(e.dataTransfer.getData('text/plain')||'').split('|');if(t&&c)wear(t,c)});
+$('inspire').onclick=inspire;
+$('clear').onclick=()=>{worn={};renderAll()};
+$('save').onclick=()=>{if(Object.keys(worn).length<2){toast('Ajoute au moins deux pièces avant d\'enregistrer');return}
+  const s=loadSaved(),a=analyze();s.unshift({n:(a?a.h:'Tenue')+' '+(s.length+1),o:JSON.parse(JSON.stringify(worn))});
+  toast(storeSaved(s.slice(0,12))?'Tenue enregistrée':'Enregistrement impossible dans ce navigateur');renderSaved()};
+
+const BCATS=[['luxe','Luxe et créateurs','Coupes travaillées, matières nobles'],['street','Streetwear','Graphique, oversize, culture urbaine'],['skate','Skate','Jeans très larges, pièces solides'],['work','Workwear','Vêtements de travail devenus classiques'],['outdoor','Outdoor','Polaires, coupe-vent, pantalons de rando'],['classique','Classique et preppy','Maille, chemises, intemporels'],['fr','Marques françaises','Fabriqué ou dessiné en France'],['sneakers','Chaussures','Baskets, derbies, boots'],['budget','Basiques petit budget','Les neutres pas chers'],['occasion','Seconde main','Friperie en ligne, bons prix']];
+const BSTY={work:'work',street:'street',preppy:'preppy',classique:'classique'};
+const BR=[
+ ['Bottega Veneta','luxe','Italie',4,'Cuir tressé et palette très terreuse : chocolat, vert profond, bordeaux.',['classique'],'https://www.bottegaveneta.com'],
+ ['Loewe','luxe','Espagne',4,'Maille et cuir aux couleurs riches, souvent ludiques.',['classique'],'https://www.loewe.com'],
+ ['Prada','luxe','Italie',4,'Minimalisme rigoureux, nylon, pièces très nettes.',['classique','preppy'],'https://www.prada.com'],
+ ['Maison Margiela','luxe','France',4,'Coupes déconstruites, blanc cassé, gris, noir.',['classique'],'https://www.maisonmargiela.com'],
+ ['Balenciaga','luxe','France',4,'Volumes extrêmes, jeans très larges, esprit street de luxe.',['street'],'https://www.balenciaga.com'],
+ ['Lemaire','luxe','France',4,'Silhouettes amples et sobres, tons sable, kaki, chocolat.',['classique','work'],'https://www.lemaire.fr'],
+ ['Acne Studios','luxe','Suède',4,'Denim pointu, maille oversize, couleurs pastel ou terre.',['street','classique'],'https://www.acnestudios.com'],
+ ['Jacquemus','luxe','France',4,'Esprit Sud, couleurs ensoleillées, coupes graphiques.',['classique'],'https://www.jacquemus.com'],
+ ['Stone Island','luxe','Italie',3,'Teintures techniques et vestes iconiques, très présent en street.',['street'],'https://www.stoneisland.com'],
+ ['Our Legacy','luxe','Suède',3,'Coupes amples, matières travaillées, vintage revisité.',['classique','street'],'https://www.ourlegacy.com'],
+ ['Ami Paris','luxe','France',3,'Classique parisien décontracté, maille et manteaux.',['classique','preppy'],'https://www.amiparis.com'],
+ ['Aimé Leon Dore','street','États-Unis',4,'Preppy new-yorkais : maille, couleurs vintage, sneakers rétro.',['preppy','street'],'https://www.aimeleondore.com'],
+ ['Stüssy','street','États-Unis',3,'Classique du streetwear, graphiques et coupes amples.',['street'],'https://www.stussy.com'],
+ ['Carhartt WIP','street','Allemagne / États-Unis',3,'Version mode de Carhartt : coupes larges, palette kaki, rouille, chocolat.',['work','street'],'https://www.carhartt-wip.com'],
+ ['Kith','street','États-Unis',3,'Streetwear soigné, beaucoup de couleurs douces et de collabs.',['street','preppy'],'https://www.kith.com'],
+ ['Palace','street','Royaume-Uni',3,'Humour, graphiques forts, culture skate londonienne.',['street'],'https://www.palaceskateboards.com'],
+ ['Supreme','street','États-Unis',3,'Drops très recherchés, logos et collaborations.',['street'],'https://www.supremenewyork.com'],
+ ['Pop Trading Company','street','Pays-Bas',2,'Skate et workwear européens, couleurs franches bien dosées.',['street','work'],'https://www.poptradingcompany.com'],
+ ['Daily Paper','street','Pays-Bas',2,'Streetwear inspiré de l\'héritage africain, couleurs riches.',['street'],'https://www.dailypaperclothing.com'],
+ ['Obey','street','États-Unis',2,'Coupes oversize, beaucoup de tons terreux et délavés.',['street'],'https://www.obeyclothing.com'],
+ ['Represent','street','Royaume-Uni',3,'Oversize premium, hoodies épais, tons neutres.',['street'],'https://www.representclo.com'],
+ ['Polar Skate Co','skate','Suède',2,'Les jeans très larges du moodboard (coupes « Big Boy », « 93 »).',['street'],'https://www.polarskateco.com'],
+ ['Butter Goods','skate','Australie',2,'Pantalons larges, couleurs brunes, vertes et pastel.',['street'],'https://www.buttergoods.com'],
+ ['Dime','skate','Canada',2,'Skate montréalais, humour et pièces confortables.',['street'],'https://www.dimemtl.com'],
+ ['HUF','skate','États-Unis',2,'Skate californien, chaussettes et t-shirts graphiques.',['street'],'https://www.hufworldwide.com'],
+ ['Vans','skate','États-Unis',2,'Chaussures de skate basiques et vêtements simples.',['street'],'https://www.vans.com'],
+ ['Carhartt','work','États-Unis',2,'La version travail d\'origine, plus robuste et moins chère que WIP.',['work'],'https://www.carhartt.com'],
+ ['Dickies','work','États-Unis',1,'Pantalon 874, coupes larges, prix doux.',['work','street'],'https://www.dickies.com'],
+ ['Stan Ray','work','États-Unis',2,'Pantalons de peintre et fatigue pants, très amples.',['work'],'https://www.stanray.com'],
+ ['Ben Davis','work','États-Unis',1,'Chemises et pantalons de travail, look années 90.',['work','street'],'https://www.bendavis.com'],
+ ['Universal Works','work','Royaume-Uni',3,'Workwear raffiné, belles matières, couleurs de terre.',['work','classique'],'https://www.universalworks.co.uk'],
+ ['Filson','work','États-Unis',3,'Toile cirée et laine, pièces faites pour durer.',['work','classique'],'https://www.filson.com'],
+ ['Vetra','fr','France',2,'Vestes bleu de chauffe et workwear fabriqués en France.',['work'],'https://www.vetra.fr'],
+ ['Le Laboureur','fr','France',1,'Vestes et pantalons de travail en moleskine, très bon rapport qualité/prix.',['work'],''],
+ ['Armor Lux','fr','France',2,'Marinières et maille bretonne.',['classique','preppy'],'https://www.armorlux.com'],
+ ['Saint James','fr','France',2,'Pulls marins et rayures normandes, fabriqués dans la Manche.',['classique','preppy'],'https://www.saint-james.com'],
+ ['Asphalte','fr','France',2,'Essentiels conçus avec la communauté, faits pour durer.',['classique'],'https://www.asphalte.com'],
+ ['Le Slip Français','fr','France',2,'Basiques fabriqués en France, sous-vêtements et maille.',['classique'],'https://www.leslipfrancais.fr'],
+ ['Officine Générale','fr','France',3,'Classique parisien : chemises, maille, pantalons à pinces.',['classique','preppy'],'https://www.officinegenerale.com'],
+ ['A.P.C.','fr','France',3,'Jean brut, coupes nettes, palette sobre.',['classique'],''],
+ ['Ralph Lauren','classique','États-Unis',3,'Le preppy américain de référence : oxford, maille torsadée, chino.',['preppy'],'https://www.ralphlauren.fr'],
+ ['Lacoste','classique','France',2,'Polos et maille, vestiaire sport chic.',['preppy','classique'],'https://www.lacoste.com'],
+ ['Drake\'s','classique','Royaume-Uni',4,'Preppy anglais haut de gamme, chemises et cravates.',['preppy'],'https://www.drakes.com'],
+ ['Arket','classique','Suède',2,'Basiques scandinaves de qualité, grande palette de couleurs.',['classique'],'https://www.arket.com'],
+ ['COS','classique','Royaume-Uni',2,'Minimalisme accessible, coupes amples et neutres.',['classique'],'https://www.cos.com'],
+ ['Levi\'s','classique','États-Unis',2,'Jeans de référence, coupes 568 et baggy pour un look ample.',['street','classique','work'],'https://www.levi.com'],
+ ['Patagonia','outdoor','États-Unis',3,'Polaires et vestes solides, engagement environnemental.',['street','work'],'https://www.patagonia.com'],
+ ['Gramicci','outdoor','États-Unis / Japon',2,'Pantalons d\'escalade à taille élastique, énormément de couleurs.',['street'],'https://www.gramicci.com'],
+ ['The North Face','outdoor','États-Unis',3,'Doudounes et coupe-vent, très portés en ville.',['street'],'https://www.thenorthface.com'],
+ ['Arc\'teryx','outdoor','Canada',4,'Technique haut de gamme, devenu un code du « gorpcore ».',['street'],'https://www.arcteryx.com'],
+ ['Columbia','outdoor','États-Unis',2,'Polaires et vestes outdoor à prix raisonnables.',['street','work'],'https://www.columbia.com'],
+ ['Salomon','sneakers','France',3,'Chaussures de trail devenues un classique du style outdoor.',['street'],'https://www.salomon.com'],
+ ['New Balance','sneakers','États-Unis',2,'Baskets rétro grises, beiges, parfaites avec du baggy.',['street','preppy'],'https://www.newbalance.com'],
+ ['Adidas','sneakers','Allemagne',2,'Baskets basses en suède, modèles rétro de terrain.',['street','preppy'],'https://www.adidas.fr'],
+ ['Nike','sneakers','États-Unis',2,'Baskets blanches et montantes, très large choix.',['street'],'https://www.nike.com'],
+ ['Veja','sneakers','France',2,'Baskets en matières plus responsables, lignes sobres.',['classique','street'],'https://www.veja-store.com'],
+ ['Asics','sneakers','Japon',2,'Running rétro, coloris argent et terreux.',['street'],'https://www.asics.com'],
+ ['Dr. Martens','sneakers','Royaume-Uni',2,'Derbies, boots et mocassins à semelle épaisse, souvent en noir ou bordeaux.',['work','street','preppy'],'https://www.drmartens.com'],
+ ['Timberland','sneakers','États-Unis',2,'Boots de travail en nubuck et chaussures bateau.',['work','street','preppy'],'https://www.timberland.com'],
+ ['Sebago','sneakers','États-Unis',2,'Chaussures bateau et mocassins, esprit nautique.',['preppy','classique'],'https://www.sebago.com'],
+ ['G.H. Bass','sneakers','États-Unis',2,'Les mocassins à bride historiques, très preppy.',['preppy','classique'],'https://www.ghbass.com'],
+ ['Paraboot','sneakers','France',3,'Derbies et mocassins robustes, une référence.',['classique','preppy','work'],'https://www.paraboot.com'],
+ ['Red Wing','sneakers','États-Unis',3,'Boots de travail en cuir, se patinent avec le temps.',['work'],'https://www.redwingshoes.com'],
+ ['Clarks','sneakers','Royaume-Uni',2,'Desert boots et Wallabee, parfaits avec un pantalon large.',['classique','preppy'],'https://www.clarks.com'],
+ ['Uniqlo','budget','Japon',1,'Le meilleur endroit pour les neutres : t-shirts, maille, pantalons wide fit.',['classique'],'https://www.uniqlo.com'],
+ ['Weekday','budget','Suède',1,'Jeans baggy et coupes amples à petit prix.',['street'],'https://www.weekday.com'],
+ ['Zara','budget','Espagne',1,'Suit les tendances vite, grand choix de coupes larges.',['classique','street'],'https://www.zara.com'],
+ ['H&M','budget','Suède',1,'Basiques et pièces tendance, tout petit budget.',['classique','street'],'https://www.hm.com'],
+ ['Pull&Bear','budget','Espagne',1,'Streetwear accessible, jeans larges.',['street'],'https://www.pullandbear.com'],
+ ['Decathlon','budget','France',1,'Polaires, surchemises et outdoor pas cher.',['street','work'],'https://www.decathlon.fr'],
+ ['Vinted','occasion','Lituanie',1,'Carhartt, Dickies, Levi\'s d\'occasion à bas prix.',['street','work','classique'],'https://www.vinted.fr'],
+ ['Vestiaire Collective','occasion','France',3,'Luxe et créateurs de seconde main, pièces authentifiées.',['classique'],'https://www.vestiairecollective.com'],
+ ['Grailed','occasion','États-Unis',3,'Streetwear et créateurs d\'occasion, très orienté homme.',['street'],'https://www.grailed.com'],
+ ['Label Emmaüs','occasion','France',1,'La boutique en ligne d\'Emmaüs, vêtements solidaires.',['classique','work'],'https://www.label-emmaus.co'],
+ ['Leboncoin','occasion','France',1,'Pratique pour les blousons cuir et les vestes de travail près de chez soi.',['work','classique'],'https://www.leboncoin.fr']
+].map(([n,cat,o,p,d,s,u])=>({n,cat,o,p,d,s,u}));
+const BSTYN={work:'Workwear',street:'Streetwear',preppy:'Preppy',classique:'Classique'};
+let BF={cat:'tous',price:0,q:''};
+function renderBFilters(){
+  $('bcat').innerHTML=[['tous','Toutes']].concat(BCATS.map(c=>[c[0],c[1]])).map(([k,n])=>`<button class="chip ${BF.cat===k?'on':''}" data-bcat="${k}">${n}</button>`).join('');
+  $('bprice').innerHTML=[[0,'Tous les budgets'],[1,'€'],[2,'€€'],[3,'€€€'],[4,'€€€€']].map(([k,n])=>`<button class="chip ${BF.price===k?'on':''}" data-bprice="${k}">${n}</button>`).join('');
+}
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+function renderBrands(){
+  const q=norm(BF.q.trim());
+  const ok=b=>(BF.cat==='tous'||b.cat===BF.cat)&&(!BF.price||b.p===BF.price)&&(!q||norm(b.n+' '+b.d+' '+b.o).includes(q));
+  const html=BCATS.map(([k,n,sub])=>{const l=BR.filter(b=>b.cat===k&&ok(b));if(!l.length)return'';
+    return`<div class="grp"><h2>${n} <small>${sub} · ${l.length}</small></h2><div class="brands">${l.map(b=>`<article class="brand">
+      <div class="bh"><h3>${b.n}</h3><span class="price" aria-label="Budget ${b.p} sur 4">${'€'.repeat(b.p)}<span>${'€'.repeat(4-b.p)}</span></span></div>
+      <div class="meta">${b.o}</div><p>${b.d}</p>
+      <div class="foot">${b.s.map(s=>`<span class="mini-chip">${BSTYN[s]}</span>`).join('')}${b.u?`<a href="${b.u}" target="_blank" rel="noopener">Site officiel ↗</a>`:''}</div>
+      <button class="linkbtn" data-try="${b.s[0]}">Essayer ce style dans l'atelier →</button></article>`).join('')}</div></div>`}).join('');
+  $('brandList').innerHTML=html||`<p class="empty-note">Aucune marque ne correspond. Essaie un autre mot ou un autre budget.</p>`;
+}
+function show(v){
+  const m=v==='marques';$('view-marques').hidden=!m;$('view-atelier').hidden=m;$('atelierActions').style.visibility=m?'hidden':'visible';
+  $('tab-atelier').setAttribute('aria-selected',String(!m));$('tab-marques').setAttribute('aria-selected',String(m));
+  try{if(location.hash!=='#'+v)history.replaceState(null,'','#'+v)}catch(e){}
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-view],[data-bcat],[data-bprice],[data-try]');if(!b)return;
+  if(b.dataset.view)show(b.dataset.view);
+  else if(b.dataset.bcat){BF.cat=b.dataset.bcat;renderBFilters();renderBrands()}
+  else if(b.dataset.bprice!==undefined){BF.price=+b.dataset.bprice;renderBFilters();renderBrands()}
+  else if(b.dataset.try){F.sty=b.dataset.try;F.cat='tout';F.col='toutes';renderFilters();renderCatalog();show('atelier');window.scrollTo(0,0);toast('Portant filtré : '+BSTYN[b.dataset.try])}
+});
+$('bsearch').addEventListener('input',e=>{BF.q=e.target.value;renderBrands()});
+window.addEventListener('hashchange',()=>show(location.hash==='#marques'?'marques':'atelier'));
+renderBFilters();renderBrands();show(location.hash==='#marques'?'marques':'atelier');
+
+worn=JSON.parse(JSON.stringify(PRESETS[0].o));
+renderFilters();renderCatalog();renderPresets();renderSaved();renderAll();
+</script>
+
+</body>
+</html>
